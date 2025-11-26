@@ -1,4 +1,4 @@
-.PHONY: build run test clean docker-build docker-run docker-rebuild fmt lint
+.PHONY: build run test clean docker-build docker-run docker-rebuild fmt lint compose-up compose-down compose-logs compose-restart compose-build
 
 # Port for the server (default: 3000)
 PORT ?= 3000
@@ -37,3 +37,23 @@ fmt:
 # Run the linter (requires golangci-lint installed)
 lint:
 	golangci-lint run
+
+# Start all services with docker-compose (server + PostgreSQL)
+compose-up:
+	docker-compose up -d
+
+# Stop all docker-compose services
+compose-down:
+	docker-compose down
+
+# View logs from all docker-compose services
+compose-logs:
+	docker-compose logs -f
+
+# Restart all docker-compose services
+compose-restart:
+	docker-compose restart
+
+# Rebuild and start all docker-compose services
+compose-build:
+	docker-compose up -d --build
