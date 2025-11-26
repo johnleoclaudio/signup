@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"signup/internal/database"
+	"signup/internal/handlers"
 )
 
 // Response represents the JSON response structure
@@ -25,7 +28,21 @@ func main() {
 		port = "3000"
 	}
 
+	// Initialize database connection
+	if err := database.Connect(); err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer database.Close()
+
+	// Run database migrations
+	if err := database.RunMigrations(); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Setup routes
 	http.HandleFunc("/", welcomeHandler)
+	http.HandleFunc("/signup", handlers.SignupHandler)
+
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("Server starting on %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {

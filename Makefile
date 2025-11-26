@@ -57,3 +57,7 @@ compose-restart:
 # Rebuild and start all docker-compose services
 compose-build:
 	docker-compose up -d --build
+
+# run ./scripts/test-signup.sh
+signup:
+	./scripts/test-signup.sh
