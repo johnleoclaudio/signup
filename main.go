@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 // Response represents the JSON response structure
@@ -18,9 +20,15 @@ func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	http.HandleFunc("/", welcomeHandler)
-	log.Println("Server starting on :3000")
-	if err := http.ListenAndServe(":3000", nil); err != nil {
+	addr := fmt.Sprintf(":%s", port)
+	log.Printf("Server starting on %s", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
 	}
 }
