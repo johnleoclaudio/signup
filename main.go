@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"signup/internal/database"
 	"signup/internal/handlers"
 )
@@ -42,6 +44,7 @@ func main() {
 	// Setup routes
 	http.HandleFunc("/", welcomeHandler)
 	http.HandleFunc("/signup", handlers.SignupHandler)
+	http.Handle("/metrics", promhttp.Handler())
 
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("Server starting on %s", addr)

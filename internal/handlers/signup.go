@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"signup/internal/database"
+	"signup/internal/metrics"
 	"signup/internal/models"
 )
 
@@ -26,25 +27,36 @@ type SuccessResponse struct {
 
 // SignupHandler handles user signup requests
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
+	var statusCode int
+
+	// Defer recording metrics at the end
+	defer func() {
+		metrics.SignupRequestsTotal.WithLabelValues(fmt.Sprintf("%d", statusCode)).Inc()
+		metrics.APIRequestsTotal.WithLabelValues(r.Method, "/signup", fmt.Sprintf("%d", statusCode)).Inc()
+	}()
+
 	if r.Method != http.MethodPost {
+		statusCode = http.StatusMethodNotAllowed
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: "method not allowed"})
 		return
 	}
 
 	var req models.SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		statusCode = http.StatusBadRequest
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid request body"})
 		return
 	}
 
 	// Validate input
 	if err := validateSignupRequest(&req); err != nil {
+		statusCode = http.StatusBadRequest
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -69,21 +81,24 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Check for duplicate email
 		if strings.Contains(err.Error(), "duplicate key") {
+			statusCode = http.StatusConflict
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusConflict)
+			w.WriteHeader(statusCode)
 			json.NewEncoder(w).Encode(ErrorResponse{Error: "email already exists"})
 			return
 		}
 
+		statusCode = http.StatusInternalServerError
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: "failed to create user"})
 		return
 	}
 
 	// Return success response
+	statusCode = http.StatusCreated
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(SuccessResponse{
 		Message: "user created successfully",
 		User:    &user,

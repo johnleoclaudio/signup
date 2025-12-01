@@ -12,3 +12,10 @@ scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+
+  # Scrape signup server for application metrics
+  - job_name: 'signup-server'
+    static_configs:
+      - targets: ['server:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
